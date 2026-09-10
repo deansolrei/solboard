@@ -6132,7 +6132,13 @@ function importFromTebraApi(startDateStr, endDateStr, dryRun) {
       // match among however many real occupants this slot has → fall
       // through to create a new row, same as before.
       var incomingPt = (appt.patient || '').toLowerCase().replace(/\s+/g, ' ').trim();
-      var _slotCandidates = existingRowMap[key] || [];
+      // DEFENSIVE (2026-09-01): existingRowMap[key] must always be an array
+      // of {rowNum, patientName} candidates — guard against any write path
+      // (present or future) that violates that shape, rather than crash the
+      // whole sync partway through. See the FIX note below at the write site
+      // for the specific bug this was protecting against.
+      var _slotCandidates = existingRowMap[key];
+      if (!Array.isArray(_slotCandidates)) _slotCandidates = [];
       var _match = _slotCandidates.find(function (c) {
         return c.patientName && incomingPt && _samePatient(c.patientName, incomingPt);
       });
@@ -6287,10 +6293,20 @@ function importFromTebraApi(startDateStr, endDateStr, dryRun) {
       newRowsTebraIds.push(appt.tebraApptId || '');
       newRowsPatientIds.push(appt.tebraPatientId || '');   // NEW
 
-      existingRowMap[key] = newRow;
       // Register new patient in tracking maps so any subsequent Tebra records
       // for the same slot can correctly identify the patient in the new row.
       var _ptKeyNew = (appt.patient || '').toLowerCase().replace(/\s+/g, ' ').trim();
+      // FIX (2026-09-01): this used to overwrite existingRowMap[key] with a
+      // bare row number, clobbering the array shape the matching logic above
+      // relies on. If a second Tebra appointment landed in this same
+      // provider+date+time slot later in the same sync run — a double-booked
+      // or overlapping slot — that crashed with "_slotCandidates.find is not
+      // a function". Because the crash happened inside dedupedAppts.forEach,
+      // it silently aborted the rest of the sync: whichever appointments
+      // hadn't been reached yet in iteration order never got written at all,
+      // with no error surfaced beyond the banner message.
+      if (!existingRowMap[key]) existingRowMap[key] = [];
+      existingRowMap[key].push({ rowNum: newRow, patientName: _ptKeyNew });
       existingPatientByRow[newRow] = _ptKeyNew;
       existingTSMap[newRow] = appt.tebraStatus || '';
       // ── Critical: update existingPatientSet so that any additional _statusOnly
