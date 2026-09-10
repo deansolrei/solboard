@@ -12,7 +12,7 @@
  *
  *  SETUP (run once):
  *    1. Paste this file into Extensions > Apps Script in your Sheet
- *    2. Paste index.html as a new HTML file named "crb_index" in the same project
+ *    2. Paste index.html as a new HTML file named "index" in the same project
  *    3. Run  initializeSheets()  to create tabs, headers, and seed Staff roster
  *    4. Deploy > New Deployment > Web App
  *         Execute as: Me
@@ -43,7 +43,7 @@ const TAB_PAYMENT_MANUAL = 'PaymentTrackerManual';
 // elsewhere in this file needed no changes.
 // SCOPE OF THIS PASS: spreadsheet header text, the PATIENT_COLS/APPT_COLS
 // constants and every indexOf() lookup against them, and user-facing UI
-// labels in crb_index.html. Internal-only JS identifiers deep in the file
+// labels in index.html. Internal-only JS identifiers deep in the file
 // (PLATFORM_TO_METHOD, METHODS, PLATFORM_MAP, METHOD_LABEL, METHOD_COLOR,
 // and object property names like .method/.platform/.paymentType passed
 // between frontend and backend) were intentionally left as-is — renaming
@@ -176,8 +176,8 @@ function _sv(v) {
 
 // True only for a genuine $0/0% rate — blank/unset is NOT zero (nothing
 // entered yet is a different state from "confirmed nothing owed"). Mirrors
-// the frontend's isZeroRate() in crb_index.html; kept in sync manually
-// since Code.js and crb_index.html don't share modules.
+// the frontend's isZeroRate() in index.html; kept in sync manually
+// since Code.js and index.html don't share modules.
 function _isZeroRate(rate) {
   if (rate === null || rate === undefined || rate === '') return false;
   var n = parseFloat(String(rate).replace(/[$%,\s]/g, ''));
@@ -190,7 +190,7 @@ function _isZeroRate(rate) {
 ════════════════════════════════════════════════════════════════ */
 function doGet() {
   return HtmlService
-    .createHtmlOutputFromFile('crb_index')
+    .createHtmlOutputFromFile('index')
     .setTitle('SolBoard - CRB — Solrei Behavioral Health')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setSandboxMode(HtmlService.SandboxMode.IFRAME);
@@ -3195,7 +3195,7 @@ function _isInLiveWindow(r, bounds) {
 
   // Gated on ClaimSubmittedDate alone — NOT on ClaimStatus, and NOT on the new
   // ClaimSubmittedAt attribution stamp. ClaimSubmitModal's Submitted Date field
-  // and Status dropdown are independent controls (crb_index.html handleSave /
+  // and Status dropdown are independent controls (index.html handleSave /
   // buildFinalAppt) — a date can be saved via "Save" while Status is left on
   // "— Select —" (blank), so gating on ClaimStatus would let an old, genuinely
   // submitted claim with no status slip back into the live window. And

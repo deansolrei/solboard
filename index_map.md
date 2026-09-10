@@ -1,6 +1,6 @@
-# `crb_index.html` Reference Map
+# `index.html` Reference Map
 
-**Purpose:** This is a read-only reference document describing the structure of `crb_index.html` (19,098 lines) as of the current commit. It is for orientation only — nothing in `crb_index.html` was changed, moved, or reformatted to produce this map. Line numbers will drift the next time the file is edited; treat them as a snapshot, not a guarantee.
+**Purpose:** This is a read-only reference document describing the structure of `index.html` (19,098 lines) as of the current commit. It is for orientation only — nothing in `index.html` was changed, moved, or reformatted to produce this map. Line numbers will drift the next time the file is edited; treat them as a snapshot, not a guarantee.
 
 The file is a single self-contained Apps Script `HtmlService` page: no build step, no bundler, no ES modules. React/ReactDOM/Babel-standalone are loaded from CDN `<script>` tags, and the entire app (all components, all styles) is authored in one `<style>` block and one `<script type="text/babel">` block, transpiled live in the browser.
 
@@ -123,7 +123,7 @@ None of the above is unused code — it's working, duplicated code. Flagging per
 
 This section is scoped as background for a *future* phase, per the request. Nothing here should be acted on now.
 
-**Current deploy setup:** `Code.js`'s `doGet()` calls `HtmlService.createHtmlOutputFromFile('crb_index')` — a single static file, no templating. Apps Script's usual multi-file pattern (`HtmlService.createTemplateFromFile('index').evaluate()` with `<?!= include('other-file') ?>` scriptlets) requires switching to `createTemplateFromFile(...).evaluate()`. That one-line change in `Code.js` would itself need to happen as part of any split — it's outside `crb_index.html` and is not something this document recommends doing yet.
+**Current deploy setup:** `Code.js`'s `doGet()` calls `HtmlService.createHtmlOutputFromFile('index')` — a single static file, no templating. Apps Script's usual multi-file pattern (`HtmlService.createTemplateFromFile('index').evaluate()` with `<?!= include('other-file') ?>` scriptlets) requires switching to `createTemplateFromFile(...).evaluate()`. That one-line change in `Code.js` would itself need to happen as part of any split — it's outside `index.html` and is not something this document recommends doing yet.
 
 **Why a naive split is risky here:** everything in the current `<script type="text/babel">` block shares one JS scope — components and constants reference each other as plain top-level `function`/`const` bindings, not module imports/exports. If the JS were split into several files each wrapped in its *own* `<script type="text/babel">` tag, Babel-standalone transpiles each independently, and `const`/`let` declared in one script tag are **not** visible to another (only `function` declarations and `var` leak onto `window` across script tags). Given how heavily this file relies on top-level `const` (all of §2.1's constants, plus `TODAY`), that split would silently break at runtime — exactly the kind of change the "don't restructure" constraint is meant to prevent.
 
@@ -131,7 +131,7 @@ This section is scoped as background for a *future* phase, per the request. Noth
 
 **What would make it safe to actually do, later:**
 1. Cut boundaries only at existing top-level component boundaries (the ones listed in §2.2) — never mid-component.
-2. After splitting, mechanically verify correctness by reconstructing the full concatenation (in the same `include()` order) and diffing it against today's `crb_index.html` — it should be identical except for the `include()`/scriptlet lines themselves. There's no test suite to catch a mis-ordered cut, so this diff *is* the safety net.
+2. After splitting, mechanically verify correctness by reconstructing the full concatenation (in the same `include()` order) and diffing it against today's `index.html` — it should be identical except for the `include()`/scriptlet lines themselves. There's no test suite to catch a mis-ordered cut, so this diff *is* the safety net.
 3. Update `doGet()` to use `createTemplateFromFile(...).evaluate()` and verify the deployed Web App still renders identically before ever touching the note the project is currently deployed as.
 4. Test against a separate/staging Apps Script deployment, not the live URL, given there's no automated test suite to catch a regression otherwise.
 5. Keep the CSS split (`styles.html`) as the first, lowest-risk step if this is ever staged incrementally — it has no scope/closure concerns at all, unlike the JS.
@@ -142,7 +142,7 @@ A "real" module split (separate `<script>` tags, explicit exports, eventually a 
 
 ## 5. Comment-sending logic — side-by-side comparison
 
-*Added after the CSS/JS map above was written and after two small edits to `crb_index.html` (extracting `BEST_CHANNEL_API_BASE` and consolidating `urgCls`), so line numbers here reflect the file's current state and are a few lines higher than any earlier references to this code elsewhere in this document.*
+*Added after the CSS/JS map above was written and after two small edits to `index.html` (extracting `BEST_CHANNEL_API_BASE` and consolidating `urgCls`), so line numbers here reflect the file's current state and are a few lines higher than any earlier references to this code elsewhere in this document.*
 
 Four components each implement "take the pending comment note, build a comment object, append it to the comments array, and persist" as their own local function. They are **not** all independent — they split into two identical pairs, differing from each other only in one structural choice (how the component stores its own state) and one consequence of that choice (what gets included in the persisted payload). Validation, comment construction, and error handling are identical across all four.
 
